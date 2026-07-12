@@ -1,0 +1,93 @@
+{{> header}}
+<div class="container container-wide">
+  <div class="card">
+    <div class="card-header">
+      <h2 class="card-title">Gestion des Quiz</h2>
+      <a href="/admin/create" class="btn btn-primary">+ Nouveau Quiz</a>
+    </div>
+
+    <div class="tabs">
+      <button class="tab active" onclick="showTab('quizzes')">Quiz ({{quizzes.length}})</button>
+      <button class="tab" onclick="showTab('participants')">Participants ({{participants.length}})</button>
+    </div>
+
+    <div id="tab-quizzes">
+      {{#if quizzes.length}}
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Question</th>
+              <th>Options</th>
+              <th>Temps</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {{#each quizzes}}
+            <tr>
+              <td>{{this.id}}</td>
+              <td>{{this.question}}</td>
+              <td>{{this.options.length}} options</td>
+              <td>{{this.times}}s</td>
+              <td>
+                <div class="actions">
+                  <a href="/admin/edit/{{this.id}}" class="btn btn-outline btn-sm">Modifier</a>
+                  <form method="POST" action="/admin/delete/{{this.id}}" style="display:inline" onsubmit="return confirm('Supprimer ce quiz ?')">
+                    <button type="submit" class="btn btn-danger btn-sm">Supprimer</button>
+                  </form>
+                </div>
+              </td>
+            </tr>
+            {{/each}}
+          </tbody>
+        </table>
+      </div>
+      {{else}}
+      <p style="text-align:center;color:#888;padding:2rem">Aucun quiz pour le moment. Cliquez sur "+ Nouveau Quiz" pour commencer.</p>
+      {{/if}}
+    </div>
+
+    <div id="tab-participants" style="display:none">
+      {{#if participants.length}}
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Nom</th>
+              <th>Telephone</th>
+              <th>Score</th>
+              <th>Date</th>
+            </tr>
+          </thead>
+          <tbody>
+            {{#each participants}}
+            <tr>
+              <td>{{this.id}}</td>
+              <td>{{this.name}}</td>
+              <td>{{this.phone}}</td>
+              <td>{{this.score}} / {{this.totalQuestions}}</td>
+              <td>{{this.createdAt}}</td>
+            </tr>
+            {{/each}}
+          </tbody>
+        </table>
+      </div>
+      {{else}}
+      <p style="text-align:center;color:#888;padding:2rem">Aucun participant pour le moment.</p>
+      {{/if}}
+    </div>
+  </div>
+</div>
+
+<script>
+function showTab(tab) {
+  document.getElementById('tab-quizzes').style.display = tab === 'quizzes' ? '' : 'none';
+  document.getElementById('tab-participants').style.display = tab === 'participants' ? '' : 'none';
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  event.target.classList.add('active');
+}
+</script>
+{{> footer}}

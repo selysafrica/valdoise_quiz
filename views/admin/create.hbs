@@ -1,0 +1,31 @@
+{{> header}}
+<div class="container">
+  <div class="card">
+    <h2 class="card-title" style="margin-bottom:1.5rem">Nouveau Quiz</h2>
+    <form method="POST" action="/admin/create">
+      <div class="form-group">
+        <label>Question</label>
+        <input type="text" name="question" class="form-control" required placeholder="Ex: Quel est le principe actif du Doliprane ?">
+      </div>
+      <div class="form-group">
+        <label>Options</label>
+        <small>Une option par ligne</small>
+        <textarea name="options" class="form-control" required placeholder="Paracetamol&#10;Ibuprofene&#10;Aspirine&#10;Codeine"></textarea>
+      </div>
+      <div class="form-group">
+        <label>Reponse(s) correcte(s)</label>
+        <small>Indices des bonnes reponses (commence a 0), separes par des virgules. Ex: 0 pour la premiere option, ou 0,2 pour plusieurs.</small>
+        <input type="text" name="answers" class="form-control" required placeholder="0">
+      </div>
+      <div class="form-group">
+        <label>Temps (secondes)</label>
+        <input type="number" name="times" class="form-control" value="30" min="5" max="300">
+      </div>
+      <div style="display:flex;gap:0.75rem">
+        <button type="submit" class="btn btn-primary">Creer le Quiz</button>
+        <a href="/admin" class="btn btn-outline">Annuler</a>
+      </div>
+    </form>
+  </div>
+</div>
+{{> footer}}
