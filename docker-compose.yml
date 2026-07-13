@@ -6,7 +6,7 @@ services:
     ports:
       - "3012:3012"
     volumes:
-      - quiz-data:/app/quiz.db
+      - quiz-data:/app/data
     environment:
       - PORT=3012
       - NODE_ENV=production

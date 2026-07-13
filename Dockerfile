@@ -15,6 +15,8 @@ COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/views ./views
 COPY --from=builder /app/public ./public
 
+RUN mkdir -p /app/data
+
 EXPOSE 3012
 ENV PORT=3012
 CMD ["node", "dist/main.js"]
