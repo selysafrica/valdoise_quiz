@@ -1,5 +1,5 @@
 DOMAIN = quiz.pharmacievaldoise.selys.app
-EMAIL = karimadio40@gmail.com
+EMAIL = dev@selys-africa.com
 COMPOSE = docker compose
 
 .PHONY: help build up down restart logs seed ssl-init ssl-renew deploy clean
