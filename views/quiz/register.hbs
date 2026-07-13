@@ -1,19 +1,19 @@
 {{> header}}
 <div class="container">
   <div class="card register-card">
-    <div class="icon-big">&#9883;</div>
-    <h2>Quiz Pharmacie Valdoise</h2>
-    <p>Testez vos connaissances en pharmacie ! Saisissez vos informations pour commencer.</p>
+    <img class="logo" src="/public/images/logo.png" alt="Pharmacie Val d'Oise">
+    <h2>Quiz Pharmacie Val d'Oise</h2>
+    <p>Testez vos connaissances sur votre pharmacie ! Saisissez vos informations pour commencer.</p>
     <form method="POST" action="/quiz/register">
       <div class="form-group" style="text-align:left">
         <label>Votre nom</label>
         <input type="text" name="name" class="form-control" required placeholder="Ex: Jean Dupont">
       </div>
       <div class="form-group" style="text-align:left">
-        <label>Votre numero de telephone</label>
+        <label>Votre numéro de téléphone</label>
         <input type="tel" name="phone" class="form-control" required placeholder="Ex: 0701020304">
       </div>
-      <button type="submit" class="btn btn-primary" style="width:100%;justify-content:center;margin-top:0.5rem">
+      <button type="submit" class="btn btn-primary" style="width:100%;margin-top:0.5rem">
         Commencer le Quiz
       </button>
     </form>
