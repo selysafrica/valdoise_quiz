@@ -4,7 +4,7 @@ import { Participant } from './participant/participant.entity';
 
 const dataSource = new DataSource({
   type: 'better-sqlite3',
-  database: 'data/quiz.db',
+  database: 'quiz.db',
   entities: [Quiz, Participant],
   synchronize: true,
 });
