@@ -11,11 +11,14 @@ export class Participant {
   @Column()
   phone: string;
 
-  @Column({ default: 0 })
-  score: number;
+  @Column('simple-json', { default: '[]' })
+  quizOrder: number[];
+
+  @Column('simple-json', { default: '[]' })
+  answeredNumbers: number[];
 
   @Column({ default: 0 })
-  totalQuestions: number;
+  score: number;
 
   @CreateDateColumn()
   createdAt: Date;

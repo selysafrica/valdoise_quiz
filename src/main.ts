@@ -19,6 +19,11 @@ async function bootstrap() {
   hbs.registerHelper('add', (a: number, b: number) => a + b);
   hbs.registerHelper('json', (obj: any) => JSON.stringify(obj));
   hbs.registerHelper('percentage', (a: number, b: number) => b > 0 ? Math.round((a / b) * 100) : 0);
+  hbs.registerHelper('formatDate', (date: any) => {
+    if (!date) return '-';
+    const d = new Date(date);
+    return d.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+  });
 
   await app.listen(process.env.PORT ?? 3002);
   console.log(`Application running on http://localhost:${process.env.PORT ?? 3002}`);

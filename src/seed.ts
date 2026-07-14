@@ -1,11 +1,13 @@
 import { DataSource } from 'typeorm';
 import { Quiz } from './quiz/quiz.entity';
 import { Participant } from './participant/participant.entity';
+import { Participation } from './participation/participation.entity';
+import { Settings } from './settings/settings.entity';
 
 const dataSource = new DataSource({
   type: 'better-sqlite3',
-  database: 'quiz.db',
-  entities: [Quiz, Participant],
+  database: 'data/quiz.db',
+  entities: [Quiz, Participant, Participation, Settings],
   synchronize: true,
 });
 

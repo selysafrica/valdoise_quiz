@@ -1,0 +1,60 @@
+{{> header}}
+<div class="container container-wide">
+  <div class="card">
+    <div class="card-header">
+      <h2 class="card-title">{{participant.name}}</h2>
+      <a href="/admin?tab=participants" class="btn btn-outline btn-sm">&larr; Retour</a>
+    </div>
+
+    <div class="dashboard-stats" style="margin-bottom:1.5rem">
+      <div class="stat-card">
+        <div class="stat-value">{{participant.phone}}</div>
+        <div class="stat-label">Téléphone</div>
+      </div>
+      <div class="stat-card stat-success">
+        <div class="stat-value">{{participant.score}}</div>
+        <div class="stat-label">Gains</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value">{{participations.length}}</div>
+        <div class="stat-label">Participations</div>
+      </div>
+    </div>
+
+    <h3 style="margin-bottom:1rem;font-size:1.05rem;color:rgba(255,255,255,0.8)">Historique des participations</h3>
+
+    {{#if participations.length}}
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Question</th>
+            <th>Résultat</th>
+            <th>Date</th>
+          </tr>
+        </thead>
+        <tbody>
+          {{#each participations}}
+          <tr>
+            <td>{{this.id}}</td>
+            <td class="question-cell">{{this.quizQuestion}}</td>
+            <td>
+              {{#if this.correct}}
+              <span class="badge badge-success">Gagné</span>
+              {{else}}
+              <span class="badge badge-danger">Perdu</span>
+              {{/if}}
+            </td>
+            <td>{{formatDate this.createdAt}}</td>
+          </tr>
+          {{/each}}
+        </tbody>
+      </table>
+    </div>
+    {{else}}
+    <p class="empty-state">Aucune participation enregistrée.</p>
+    {{/if}}
+  </div>
+</div>
+{{> footer}}

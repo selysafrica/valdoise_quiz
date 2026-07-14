@@ -1,17 +1,125 @@
 {{> header}}
 <div class="container container-wide">
+
+  <div class="dashboard-stats">
+    <div class="stat-card">
+      <div class="stat-value">{{totalParticipants}}</div>
+      <div class="stat-label">Participants</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value">{{totalParticipations}}</div>
+      <div class="stat-label">Participations</div>
+    </div>
+    <div class="stat-card stat-success">
+      <div class="stat-value">{{totalWins}}</div>
+      <div class="stat-label">Bonnes réponses</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value">{{totalQuizzes}}</div>
+      <div class="stat-label">Questions</div>
+    </div>
+  </div>
+
   <div class="card">
-    <div class="card-header">
-      <h2 class="card-title">Gestion des Quiz</h2>
-      <a href="/admin/create" class="btn btn-primary">+ Nouveau Quiz</a>
-    </div>
-
     <div class="tabs">
-      <button class="tab active" onclick="showTab('quizzes')">Quiz ({{quizzes.length}})</button>
-      <button class="tab" onclick="showTab('participants')">Participants ({{participants.length}})</button>
+      <button class="tab {{#if (eq activeTab 'participants')}}active{{/if}}" onclick="switchTab('participants')">Participants</button>
+      <button class="tab {{#if (eq activeTab 'participations')}}active{{/if}}" onclick="switchTab('participations')">Participations</button>
+      <button class="tab {{#if (eq activeTab 'quizzes')}}active{{/if}}" onclick="switchTab('quizzes')">Questionnaires</button>
+      <button class="tab {{#if (eq activeTab 'settings')}}active{{/if}}" onclick="switchTab('settings')">Paramètres</button>
     </div>
 
-    <div id="tab-quizzes">
+    <!-- Participants Tab -->
+    <div id="tab-participants" class="tab-content" {{#unless (eq activeTab 'participants')}}style="display:none"{{/unless}}>
+      {{#if participants.length}}
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Nom</th>
+              <th>Téléphone</th>
+              <th>Participations</th>
+              <th>Score</th>
+              <th>Date</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {{#each participants}}
+            <tr>
+              <td>{{this.id}}</td>
+              <td>{{this.name}}</td>
+              <td>{{this.phone}}</td>
+              <td>{{this.answeredCount}}</td>
+              <td>
+                <span class="badge {{#if this.score}}badge-success{{else}}badge-muted{{/if}}">
+                  {{this.score}} gains
+                </span>
+              </td>
+              <td>{{formatDate this.createdAt}}</td>
+              <td>
+                <a href="/admin/participant/{{this.id}}" class="btn btn-outline btn-sm">Voir</a>
+              </td>
+            </tr>
+            {{/each}}
+          </tbody>
+        </table>
+      </div>
+      {{else}}
+      <p class="empty-state">Aucun participant pour le moment.</p>
+      {{/if}}
+    </div>
+
+    <!-- Participations Tab -->
+    <div id="tab-participations" class="tab-content" {{#unless (eq activeTab 'participations')}}style="display:none"{{/unless}}>
+      <div class="filter-bar">
+        <a href="/admin?tab=participations&filter=all" class="btn btn-sm {{#if (eq filter 'all')}}btn-primary{{else}}btn-outline{{/if}}">Toutes</a>
+        <a href="/admin?tab=participations&filter=winners" class="btn btn-sm {{#if (eq filter 'winners')}}btn-primary{{else}}btn-outline{{/if}}">Gagnants</a>
+      </div>
+      {{#if participations.length}}
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Participant</th>
+              <th>Téléphone</th>
+              <th>Question</th>
+              <th>Résultat</th>
+              <th>Date</th>
+            </tr>
+          </thead>
+          <tbody>
+            {{#each participations}}
+            <tr>
+              <td>{{this.id}}</td>
+              <td>{{this.participantName}}</td>
+              <td>{{this.participantPhone}}</td>
+              <td class="question-cell">{{this.quizQuestion}}</td>
+              <td>
+                {{#if this.correct}}
+                <span class="badge badge-success">Gagné</span>
+                {{else}}
+                <span class="badge badge-danger">Perdu</span>
+                {{/if}}
+              </td>
+              <td>{{formatDate this.createdAt}}</td>
+            </tr>
+            {{/each}}
+          </tbody>
+        </table>
+      </div>
+      {{else}}
+      <p class="empty-state">Aucune participation pour le moment.</p>
+      {{/if}}
+    </div>
+
+    <!-- Quizzes Tab -->
+    <div id="tab-quizzes" class="tab-content" {{#unless (eq activeTab 'quizzes')}}style="display:none"{{/unless}}>
+      <div class="card-header" style="margin-bottom:1rem">
+        <span></span>
+        <a href="/admin/create" class="btn btn-primary btn-sm">+ Nouveau Quiz</a>
+      </div>
       {{#if quizzes.length}}
       <div class="table-wrap">
         <table>
@@ -20,7 +128,6 @@
               <th>#</th>
               <th>Question</th>
               <th>Options</th>
-              <th>Temps</th>
               <th>Actions</th>
             </tr>
           </thead>
@@ -28,9 +135,8 @@
             {{#each quizzes}}
             <tr>
               <td>{{this.id}}</td>
-              <td>{{this.question}}</td>
+              <td class="question-cell">{{this.question}}</td>
               <td>{{this.options.length}} options</td>
-              <td>{{this.times}}s</td>
               <td>
                 <div class="actions">
                   <a href="/admin/edit/{{this.id}}" class="btn btn-outline btn-sm">Modifier</a>
@@ -45,49 +151,38 @@
         </table>
       </div>
       {{else}}
-      <p style="text-align:center;color:#888;padding:2rem">Aucun quiz pour le moment. Cliquez sur "+ Nouveau Quiz" pour commencer.</p>
+      <p class="empty-state">Aucun quiz. Cliquez sur "+ Nouveau Quiz" pour commencer.</p>
       {{/if}}
     </div>
 
-    <div id="tab-participants" style="display:none">
-      {{#if participants.length}}
-      <div class="table-wrap">
-        <table>
-          <thead>
-            <tr>
-              <th>#</th>
-              <th>Nom</th>
-              <th>Telephone</th>
-              <th>Score</th>
-              <th>Date</th>
-            </tr>
-          </thead>
-          <tbody>
-            {{#each participants}}
-            <tr>
-              <td>{{this.id}}</td>
-              <td>{{this.name}}</td>
-              <td>{{this.phone}}</td>
-              <td>{{this.score}} / {{this.totalQuestions}}</td>
-              <td>{{this.createdAt}}</td>
-            </tr>
-            {{/each}}
-          </tbody>
-        </table>
-      </div>
-      {{else}}
-      <p style="text-align:center;color:#888;padding:2rem">Aucun participant pour le moment.</p>
-      {{/if}}
+    <!-- Settings Tab -->
+    <div id="tab-settings" class="tab-content" {{#unless (eq activeTab 'settings')}}style="display:none"{{/unless}}>
+      <form method="POST" action="/admin/settings" class="settings-form">
+        <div class="form-group">
+          <label>Nombre de participations par jour par participant</label>
+          <input type="number" name="dailyQuota" class="form-control" value="{{dailyQuota}}" min="1" max="100" style="max-width:200px">
+          <small>Chaque participant peut répondre à ce nombre de questions par jour maximum.</small>
+        </div>
+        <button type="submit" class="btn btn-primary">Enregistrer</button>
+      </form>
     </div>
   </div>
 </div>
 
 <script>
-function showTab(tab) {
-  document.getElementById('tab-quizzes').style.display = tab === 'quizzes' ? '' : 'none';
-  document.getElementById('tab-participants').style.display = tab === 'participants' ? '' : 'none';
-  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+function switchTab(tab) {
+  document.querySelectorAll('.tab-content').forEach(function(el) {
+    el.style.display = 'none';
+  });
+  document.getElementById('tab-' + tab).style.display = '';
+  document.querySelectorAll('.tab').forEach(function(t) {
+    t.classList.remove('active');
+  });
   event.target.classList.add('active');
+
+  var url = new URL(window.location);
+  url.searchParams.set('tab', tab);
+  window.history.replaceState({}, '', url);
 }
 </script>
 {{> footer}}

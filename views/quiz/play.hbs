@@ -1,24 +1,30 @@
-{{#if finished}}
+{{#if error}}
 {{> header}}
 <div class="container">
-  <div class="card results-card">
-    <h2 class="card-title">Quiz terminé !</h2>
-    <div class="score-circle">
-      {{participant.score}}/{{total}}
-      <small>{{percentage participant.score total}}%</small>
-    </div>
-    <p class="score-label">
-      {{#if (eq participant.score total)}}
-        Parfait ! Vous avez tout bon !
-      {{else}}
-        {{#if (eq participant.score 0)}}
-          Pas de chance cette fois. Retentez votre chance !
-        {{else}}
-          Bien joué ! Continuez à apprendre.
-        {{/if}}
-      {{/if}}
-    </p>
-    <a href="/quiz" class="btn btn-primary">Recommencer</a>
+  <div class="card" style="text-align:center">
+    <h2>{{error}}</h2>
+    <a href="/quiz" class="btn btn-primary" style="margin-top:1rem">Retour</a>
+  </div>
+</div>
+{{> footer}}
+{{else if quotaExceeded}}
+{{> header}}
+<div class="container">
+  <div class="card" style="text-align:center;max-width:500px;margin:3.5rem auto">
+    <div style="font-size:3rem;margin-bottom:0.8rem">⏰</div>
+    <h2 style="margin-bottom:0.5rem">Quota atteint !</h2>
+    <p style="color:rgba(255,255,255,0.65);margin-bottom:1.5rem">Revenez demain pour continuer à jouer !</p>
+    <a href="/quiz" class="btn btn-primary">Retour</a>
+  </div>
+</div>
+{{> footer}}
+{{else if alreadyAnswered}}
+{{> header}}
+<div class="container">
+  <div class="card" style="text-align:center">
+    <h2>Numéro {{number}} déjà répondu !</h2>
+    <p style="color:rgba(255,255,255,0.65);margin:1rem 0">Vous avez déjà répondu à cette question. Choisissez un autre numéro.</p>
+    <a href="/quiz/board/{{participant.id}}" class="btn btn-primary">Retourner</a>
   </div>
 </div>
 {{> footer}}
@@ -28,7 +34,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Question {{add currentIndex 1}} - Pharmacie Val d'Oise</title>
+  <title>Question N°{{number}} - Pharmacie Val d'Oise</title>
   <link rel="icon" type="image/png" href="/public/images/logo.png">
   <link rel="stylesheet" href="/public/css/style.css">
 </head>
@@ -38,22 +44,12 @@
       <img src="/public/images/logo.png" alt="Pharmacie Val d'Oise">
       <span>Pharmacie Val d'Oise</span>
     </div>
-    <div class="quiz-progress">
-      <div class="label">Question {{add currentIndex 1}} / {{totalQuizzes}}</div>
-      <div class="bar"><div class="fill" style="width: {{percentage currentIndex totalQuizzes}}%"></div></div>
-    </div>
-    <div class="timer-ring" id="timerRing">
-      <svg viewBox="0 0 62 62">
-        <circle class="track" cx="31" cy="31" r="27"></circle>
-        <circle class="arc" id="timerArc" cx="31" cy="31" r="27"></circle>
-      </svg>
-      <span class="num" id="timer">{{quiz.times}}</span>
-    </div>
+    <div class="number-badge-top">N°{{number}}</div>
   </div>
 
   <div class="quiz-container">
     <div class="question-card">
-      <span class="q-badge">Q{{add currentIndex 1}}</span>
+      <span class="q-badge">Question N°{{number}}</span>
       <h2 class="quiz-question">{{quiz.question}}</h2>
       <p class="quiz-hint" id="hint"></p>
     </div>
@@ -67,65 +63,27 @@
       {{/each}}
     </div>
 
-    <div id="feedback" style="display:none"></div>
-
     <div style="text-align:center">
       <button id="validateBtn" class="btn btn-primary" onclick="validateAnswer()" style="display:none">
         Valider ma réponse
       </button>
-      <button id="nextBtn" class="btn btn-primary" onclick="nextQuestion()" style="display:none">
-        Question suivante &rarr;
-      </button>
     </div>
+
+    <div id="resultOverlay" class="result-overlay" style="display:none"></div>
   </div>
 
 <script>
   var quiz = {{{json quiz}}};
   var participantId = {{participant.id}};
-  var currentIndex = {{currentIndex}};
-  var nextIndex = {{nextIndex}};
-  var totalQuizzes = {{totalQuizzes}};
-  var timeLeft = quiz.times;
+  var numberIndex = {{numberIndex}};
   var selectedOptions = [];
   var answered = false;
-  var timerInterval;
 
-  var timerEl = document.getElementById('timer');
-  var timerRing = document.getElementById('timerRing');
-  var timerArc = document.getElementById('timerArc');
   var validateBtn = document.getElementById('validateBtn');
-  var nextBtn = document.getElementById('nextBtn');
-  var feedbackEl = document.getElementById('feedback');
   var hintEl = document.getElementById('hint');
-
-  var CIRC = 2 * Math.PI * 27;
-  timerArc.style.strokeDasharray = CIRC;
-  timerArc.style.strokeDashoffset = 0;
 
   if (quiz.answers.length > 1) {
     hintEl.textContent = 'Plusieurs réponses possibles — sélectionnez toutes les bonnes réponses.';
-  }
-
-  function updateRing() {
-    var ratio = timeLeft / quiz.times;
-    timerArc.style.strokeDashoffset = CIRC * (1 - ratio);
-    if (ratio <= 0.17) {
-      timerRing.className = 'timer-ring danger';
-    } else if (ratio <= 0.35) {
-      timerRing.className = 'timer-ring warning';
-    }
-  }
-
-  function startTimer() {
-    timerInterval = setInterval(function() {
-      timeLeft--;
-      timerEl.textContent = timeLeft;
-      updateRing();
-      if (timeLeft <= 0) {
-        clearInterval(timerInterval);
-        timeUp();
-      }
-    }, 1000);
   }
 
   function selectOption(btn, index) {
@@ -154,9 +112,8 @@
   function validateAnswer() {
     if (answered || selectedOptions.length === 0) return;
     answered = true;
-    clearInterval(timerInterval);
 
-    fetch('/quiz/answer/' + participantId + '/' + currentIndex, {
+    fetch('/quiz/answer/' + participantId + '/' + numberIndex, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ selected: selectedOptions })
@@ -167,22 +124,7 @@
     });
   }
 
-  function timeUp() {
-    answered = true;
-    validateBtn.style.display = 'none';
-
-    fetch('/quiz/answer/' + participantId + '/' + currentIndex, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ selected: [] })
-    })
-    .then(function(r) { return r.json(); })
-    .then(function(data) {
-      showResult(false, data.correctAnswers, [], true);
-    });
-  }
-
-  function showResult(isCorrect, correctAnswers, selected, isTimeout) {
+  function showResult(isCorrect, correctAnswers, selected) {
     var buttons = document.querySelectorAll('.option-btn');
     buttons.forEach(function(btn) {
       var idx = parseInt(btn.getAttribute('data-index'));
@@ -206,28 +148,31 @@
       }
     });
 
-    feedbackEl.style.display = '';
-    if (isTimeout) {
-      feedbackEl.innerHTML = '<div class="feedback-msg timeout">&#9200; Temps écoulé ! Voici la bonne réponse.</div>';
-    } else if (isCorrect) {
-      feedbackEl.innerHTML = '<div class="feedback-msg correct">&#10003; Bonne réponse !</div>';
-    } else {
-      feedbackEl.innerHTML = '<div class="feedback-msg wrong">&#10007; Mauvaise réponse. Voici la bonne réponse.</div>';
-    }
-
     validateBtn.style.display = 'none';
-    nextBtn.style.display = '';
-  }
 
-  function nextQuestion() {
-    if (nextIndex >= totalQuizzes) {
-      window.location.href = '/quiz/results/' + participantId;
+    var overlay = document.getElementById('resultOverlay');
+    overlay.style.display = '';
+
+    if (isCorrect) {
+      overlay.innerHTML =
+        '<div class="result-card result-success">' +
+          '<div class="result-emoji">🎉</div>' +
+          '<h2>FÉLICITATIONS !</h2>' +
+          '<p>VOUS AVEZ LA BONNE RÉPONSE</p>' +
+          '<p class="result-sub">Veuillez vous rapprocher d\'un agent pour récupérer votre cadeau</p>' +
+          '<a href="/quiz/board/' + participantId + '" class="btn btn-primary">Retourner</a>' +
+        '</div>';
     } else {
-      window.location.href = '/quiz/play/' + participantId + '/' + nextIndex;
+      overlay.innerHTML =
+        '<div class="result-card result-fail">' +
+          '<div class="result-emoji">😔</div>' +
+          '<h2>DOMMAGE !</h2>' +
+          '<p>Ce n\'est pas la bonne réponse</p>' +
+          '<p class="result-sub">La bonne réponse est indiquée en vert ci-dessus</p>' +
+          '<a href="/quiz/board/' + participantId + '" class="btn btn-primary">Retourner</a>' +
+        '</div>';
     }
   }
-
-  startTimer();
 </script>
 </body>
 </html>

@@ -6,15 +6,19 @@ import { AppController } from './app.controller.js';
 import { QuizModule } from './quiz/quiz.module.js';
 import { AdminModule } from './admin/admin.module.js';
 import { ParticipantModule } from './participant/participant.module.js';
+import { ParticipationModule } from './participation/participation.module.js';
+import { SettingsModule } from './settings/settings.module.js';
 import { Quiz } from './quiz/quiz.entity.js';
 import { Participant } from './participant/participant.entity.js';
+import { Participation } from './participation/participation.entity.js';
+import { Settings } from './settings/settings.entity.js';
 
 @Module({
   imports: [
     TypeOrmModule.forRoot({
       type: 'better-sqlite3',
-      database: 'quiz.db',
-      entities: [Quiz, Participant],
+      database: 'data/quiz.db',
+      entities: [Quiz, Participant, Participation, Settings],
       synchronize: true,
     }),
     ServeStaticModule.forRoot({
@@ -25,6 +29,8 @@ import { Participant } from './participant/participant.entity.js';
     QuizModule,
     AdminModule,
     ParticipantModule,
+    ParticipationModule,
+    SettingsModule,
   ],
   controllers: [AppController],
 })

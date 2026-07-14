@@ -10,8 +10,8 @@ export class ParticipantService {
     private readonly participantRepo: Repository<Participant>,
   ) {}
 
-  create(name: string, phone: string): Promise<Participant> {
-    const participant = this.participantRepo.create({ name, phone });
+  create(name: string, phone: string, quizOrder: number[]): Promise<Participant> {
+    const participant = this.participantRepo.create({ name, phone, quizOrder });
     return this.participantRepo.save(participant);
   }
 
@@ -19,8 +19,24 @@ export class ParticipantService {
     return this.participantRepo.findOneBy({ id });
   }
 
-  async updateScore(id: number, score: number, totalQuestions: number): Promise<void> {
-    await this.participantRepo.update(id, { score, totalQuestions });
+  findByPhone(phone: string): Promise<Participant | null> {
+    return this.participantRepo.findOneBy({ phone });
+  }
+
+  async save(participant: Participant): Promise<Participant> {
+    return this.participantRepo.save(participant);
+  }
+
+  async markAnswered(id: number, number: number, correct: boolean): Promise<void> {
+    const participant = await this.findOne(id);
+    if (!participant) return;
+    if (!participant.answeredNumbers.includes(number)) {
+      participant.answeredNumbers.push(number);
+    }
+    if (correct) {
+      participant.score += 1;
+    }
+    await this.participantRepo.save(participant);
   }
 
   findAll(): Promise<Participant[]> {
