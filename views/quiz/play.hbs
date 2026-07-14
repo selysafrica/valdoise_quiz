@@ -24,7 +24,7 @@
   <div class="card" style="text-align:center">
     <h2>Numéro {{number}} déjà répondu !</h2>
     <p style="color:rgba(255,255,255,0.65);margin:1rem 0">Vous avez déjà répondu à cette question. Choisissez un autre numéro.</p>
-    <a href="/quiz/board/{{participant.id}}" class="btn btn-primary">Retourner</a>
+    <a href="/quiz" class="btn btn-primary">Retour</a>
   </div>
 </div>
 {{> footer}}
@@ -160,7 +160,7 @@
           '<h2>FÉLICITATIONS !</h2>' +
           '<p>VOUS AVEZ LA BONNE RÉPONSE</p>' +
           '<p class="result-sub">Veuillez vous rapprocher d\'un agent pour récupérer votre cadeau</p>' +
-          '<a href="/quiz/board/' + participantId + '" class="btn btn-primary">Retourner</a>' +
+          '<a href="/quiz" class="btn btn-primary">Terminer</a>' +
         '</div>';
     } else {
       overlay.innerHTML =
@@ -169,7 +169,7 @@
           '<h2>DOMMAGE !</h2>' +
           '<p>Ce n\'est pas la bonne réponse</p>' +
           '<p class="result-sub">La bonne réponse est indiquée en vert ci-dessus</p>' +
-          '<a href="/quiz/board/' + participantId + '" class="btn btn-primary">Retourner</a>' +
+          '<a href="/quiz" class="btn btn-primary">Terminer</a>' +
         '</div>';
     }
   }
