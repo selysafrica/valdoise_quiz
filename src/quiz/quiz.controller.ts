@@ -1,18 +1,11 @@
-import { Controller, Get, Post, Body, Param, Render, Res } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Query, Render, Res } from '@nestjs/common';
 import type { Response } from 'express';
 import { QuizService } from './quiz.service.js';
 import { ParticipantService } from '../participant/participant.service.js';
 import { ParticipationService } from '../participation/participation.service.js';
 import { SettingsService } from '../settings/settings.service.js';
 
-function shuffle<T>(arr: T[]): T[] {
-  const a = [...arr];
-  for (let i = a.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [a[i], a[j]] = [a[j], a[i]];
-  }
-  return a;
-}
+const TOTAL_NUMBERS = 25;
 
 @Controller('quiz')
 export class QuizController {
@@ -25,8 +18,10 @@ export class QuizController {
 
   @Get()
   @Render('quiz/register')
-  registerPage() {
-    return {};
+  registerPage(@Query('quota') quota?: string) {
+    return {
+      quotaMessage: quota ? 'Vous avez atteint votre quota du jour. Revenez demain pour continuer à jouer !' : null,
+    };
   }
 
   @Post('register')
@@ -34,94 +29,95 @@ export class QuizController {
     @Body() body: { name: string; phone: string },
     @Res() res: Response,
   ) {
-    const quizzes = await this.quizService.findAll();
-    const quizOrder = shuffle(quizzes.map((q) => q.id));
-
     let participant = await this.participantService.findByPhone(body.phone);
     if (participant) {
       participant.name = body.name;
-      participant.quizOrder = quizOrder;
-      participant.answeredNumbers = [];
       await this.participantService.save(participant);
     } else {
-      participant = await this.participantService.create(body.name, body.phone, quizOrder);
+      participant = await this.participantService.create(body.name, body.phone);
     }
 
     res.redirect(`/quiz/board/${participant.id}`);
   }
 
   @Get('board/:participantId')
-  @Render('quiz/board')
-  async board(@Param('participantId') participantId: string) {
+  async board(
+    @Param('participantId') participantId: string,
+    @Res() res: Response,
+  ) {
     const pid = parseInt(participantId, 10);
     const participant = await this.participantService.findOne(pid);
-    if (!participant) return { error: 'Participant non trouvé' };
+    if (!participant) {
+      res.redirect('/quiz');
+      return;
+    }
 
     const dailyQuota = await this.settingsService.getDailyQuota();
     const todayCount = await this.participationService.countToday(pid);
 
     if (todayCount >= dailyQuota) {
-      return { quotaExceeded: true, participant, dailyQuota };
+      res.redirect('/quiz?quota=1');
+      return;
     }
 
-    const totalNumbers = participant.quizOrder.length;
     const numbers: { number: number; answered: boolean }[] = [];
-    for (let i = 0; i < totalNumbers; i++) {
+    for (let i = 0; i < TOTAL_NUMBERS; i++) {
       numbers.push({
         number: i + 1,
         answered: participant.answeredNumbers.includes(i),
       });
     }
 
-    return {
+    res.render('quiz/board', {
       participant,
       numbers,
-      totalNumbers,
       remaining: dailyQuota - todayCount,
       dailyQuota,
-    };
+    });
   }
 
   @Get('play/:participantId/:number')
-  @Render('quiz/play')
   async play(
     @Param('participantId') participantId: string,
     @Param('number') number: string,
+    @Res() res: Response,
   ) {
     const pid = parseInt(participantId, 10);
     const num = parseInt(number, 10);
     const participant = await this.participantService.findOne(pid);
-    if (!participant) return { error: 'Participant non trouvé' };
+    if (!participant) { res.render('quiz/play', { error: 'Participant non trouvé' }); return; }
+
+    if (num < 0 || num >= TOTAL_NUMBERS) { res.render('quiz/play', { error: 'Numéro invalide' }); return; }
 
     const dailyQuota = await this.settingsService.getDailyQuota();
     const todayCount = await this.participationService.countToday(pid);
     if (todayCount >= dailyQuota) {
-      return { quotaExceeded: true, participant };
+      res.redirect('/quiz?quota=1');
+      return;
     }
-
-    const quizId = participant.quizOrder[num];
-    if (quizId === undefined) return { error: 'Numéro invalide' };
 
     if (participant.answeredNumbers.includes(num)) {
-      return { alreadyAnswered: true, participant, number: num + 1 };
+      res.render('quiz/play', { alreadyAnswered: true, participant, number: num + 1 });
+      return;
     }
 
-    const quiz = await this.quizService.findOne(quizId);
-    if (!quiz) return { error: 'Quiz non trouvé' };
+    const quizzes = await this.quizService.findAll();
+    if (quizzes.length === 0) { res.render('quiz/play', { error: 'Aucun quiz disponible' }); return; }
+    const quiz = quizzes[Math.floor(Math.random() * quizzes.length)];
 
-    return {
+    res.render('quiz/play', {
       quiz,
       participant,
       number: num + 1,
       numberIndex: num,
-    };
+    });
   }
 
   @Post('answer/:participantId/:number')
   async answer(
     @Param('participantId') participantId: string,
     @Param('number') number: string,
-    @Body() body: { selected: number[] },
+    @Body() body: { selected: number[]; quizId: number },
     @Res() res: Response,
   ) {
     const pid = parseInt(participantId, 10);
@@ -132,8 +128,7 @@ export class QuizController {
       return;
     }
 
-    const quizId = participant.quizOrder[num];
-    const quiz = await this.quizService.findOne(quizId);
+    const quiz = await this.quizService.findOne(body.quizId);
     if (!quiz) {
       res.json({ error: true });
       return;
@@ -156,10 +151,14 @@ export class QuizController {
       correct: isCorrect,
     });
 
+    const dailyQuota = await this.settingsService.getDailyQuota();
+    const todayCount = await this.participationService.countToday(pid);
+
     res.json({
       correct: isCorrect,
       correctAnswers: quiz.answers,
       selected,
+      quotaExceeded: todayCount >= dailyQuota,
     });
   }
 }

@@ -10,8 +10,8 @@ export class ParticipantService {
     private readonly participantRepo: Repository<Participant>,
   ) {}
 
-  create(name: string, phone: string, quizOrder: number[]): Promise<Participant> {
-    const participant = this.participantRepo.create({ name, phone, quizOrder });
+  create(name: string, phone: string): Promise<Participant> {
+    const participant = this.participantRepo.create({ name, phone });
     return this.participantRepo.save(participant);
   }
 

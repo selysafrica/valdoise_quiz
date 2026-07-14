@@ -4,6 +4,9 @@
     <img class="logo" src="/public/images/logo.png" alt="Pharmacie Val d'Oise">
     <h2>Quiz Pharmacie Val d'Oise</h2>
     <p>Testez vos connaissances sur votre pharmacie ! Saisissez vos informations pour commencer.</p>
+    {{#if quotaMessage}}
+    <div class="feedback-msg timeout" style="margin-bottom:1rem">⏰ {{quotaMessage}}</div>
+    {{/if}}
     <form method="POST" action="/quiz/register">
       <div class="form-group" style="text-align:left">
         <label>Votre nom</label>

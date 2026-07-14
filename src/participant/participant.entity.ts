@@ -12,9 +12,6 @@ export class Participant {
   phone: string;
 
   @Column('simple-json', { default: '[]' })
-  quizOrder: number[];
-
-  @Column('simple-json', { default: '[]' })
   answeredNumbers: number[];
 
   @Column({ default: 0 })
